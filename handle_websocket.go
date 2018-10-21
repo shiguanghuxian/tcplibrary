@@ -26,7 +26,7 @@ func (ws *WebSocketServer) handleConn(conn *Conn) {
 	for {
 		// 解析websocket传输的包
 		defaultPacket := new(DefaultPacket)
-		err := websocket.JSON.Receive(conn.Conn.(*websocket.Conn), defaultPacket)
+		err := ws.packet.GetWebsocketCodec().Receive(conn.Conn.(*websocket.Conn), defaultPacket)
 		if err != nil {
 			globalLogger.Errorf(err.Error())
 			// 关闭连接，并通知错误

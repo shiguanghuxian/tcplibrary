@@ -30,7 +30,7 @@ func NewTCPServer(debug bool, socket ServerSocket, packets ...Packet) (*TCPServe
 	// 封包解包对象
 	var packet Packet
 	if len(packets) == 0 {
-		packet = new(DefaultPacket)
+		packet = NewDefaultPacket()
 	} else {
 		packet = packets[0]
 	}

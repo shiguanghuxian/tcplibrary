@@ -43,7 +43,7 @@ func (c *Conn) SendMessage(v interface{}) (int, error) {
 		}
 		return c.Write(data)
 	} else if c.connType == WebSocketType { // json方式
-		data, err := c.packet.MarshalToJSON(v)
+		data, _, err := c.packet.MarshalToJSON(v)
 		if err != nil {
 			globalLogger.Errorf(err.Error())
 			return 0, err

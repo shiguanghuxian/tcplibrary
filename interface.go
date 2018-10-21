@@ -6,6 +6,8 @@
  */
 package tcplibrary
 
+import "golang.org/x/net/websocket"
+
 /* tcp库用到的接口定义 */
 
 // Socket tcp通讯需要的一些回调函数
@@ -24,7 +26,9 @@ type ServerSocket interface {
 
 // Packet 封包和解包
 type Packet interface {
-	Unmarshal(data []byte, c chan interface{}) ([]byte, error) // 解包
-	Marshal(v interface{}) ([]byte, error)                     // 封包
-	MarshalToJSON(v interface{}) ([]byte, error)               // 封包为json字符串形式
+	Unmarshal(data []byte, c chan interface{}) ([]byte, error)                // 解包
+	Marshal(v interface{}) ([]byte, error)                                    // 封包
+	MarshalToJSON(v interface{}) (data []byte, payloadType byte, err error)   // 封包为json字符串形式
+	UnmarshalToJSON(data []byte, payloadType byte, v interface{}) (err error) // 解包为json字符串形式
+	GetWebsocketCodec() *websocket.Codec
 }

@@ -11,12 +11,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"golang.org/x/net/websocket"
 )
 
 // DefaultPacket 协议包
 type DefaultPacket struct {
-	Length  int32       `json:"Length"`  // Payload 包长度,4字节
-	Payload interface{} `json:"Payload"` // 报文内容,n字节
+	Length         int32            `json:"Length"`  // Payload 包长度,4字节
+	Payload        interface{}      `json:"Payload"` // 报文内容,n字节
+	WebsocketCodec *websocket.Codec `json:"-"`
+}
+
+// NewDefaultPacket 创建解包封包对象
+func NewDefaultPacket() *DefaultPacket {
+	dp := new(DefaultPacket)
+	dp.WebsocketCodec = &websocket.Codec{dp.MarshalToJSON, dp.UnmarshalToJSON}
+	return dp
 }
 
 // GetPayload 获取包内容
@@ -89,12 +99,23 @@ func (dp *DefaultPacket) Marshal(v interface{}) ([]byte, error) {
 }
 
 // MarshalToJSON 编码到json, 同时将Payload转为字符串
-func (dp *DefaultPacket) MarshalToJSON(v interface{}) ([]byte, error) {
+func (dp *DefaultPacket) MarshalToJSON(v interface{}) (data []byte, payloadType byte, err error) {
 	packet, ok := v.(*DefaultPacket)
 	if ok == false {
-		return nil, errors.New("封包参数不是*DefaultPacket")
+		return []byte{}, websocket.TextFrame, errors.New("封包参数不是*DefaultPacket")
 	}
 	packet.Payload = string(packet.GetPayload())
-	// 直接转json返回
-	return json.Marshal(packet)
+
+	data, err = json.Marshal(packet)
+	return data, websocket.TextFrame, err
+}
+
+// UnmarshalToJSON 解包为json字符串形式
+func (dp *DefaultPacket) UnmarshalToJSON(data []byte, payloadType byte, v interface{}) (err error) {
+	return json.Unmarshal(data, v)
+}
+
+// GetWebsocketCodec 获取websocket编解码对象
+func (dp *DefaultPacket) GetWebsocketCodec() *websocket.Codec {
+	return dp.WebsocketCodec
 }
