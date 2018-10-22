@@ -7,7 +7,6 @@
 package tcplibrary
 
 import (
-	"errors"
 	"io"
 	"sync"
 	"time"
@@ -121,8 +120,8 @@ func (t *TCPLibrary) closeConn(conn *Conn, err error) {
 		globalLogger.Errorf(err.Error())
 		// 通知错误
 		t.socket.OnError(err)
-	} else {
-		err = errors.New("")
+	} else if err == io.EOF {
+		err = nil
 	}
 	// 关闭连接
 	t.socket.OnClose(conn, err) // 通知关闭
