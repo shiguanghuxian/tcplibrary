@@ -7,6 +7,7 @@
 package tcplibrary
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -18,8 +19,8 @@ import (
 // TCPServer tcp服务端对象
 type TCPServer struct {
 	*TCPLibrary
-	listener   *net.TCPListener // tcp监听
-	isListener bool             // 是否已监听
+	listener   net.Listener // tcp监听
+	isListener bool         // 是否已监听
 }
 
 // NewTCPServer 创建一个server实例
@@ -66,6 +67,42 @@ func (tcp *TCPServer) ListenAndServe(address string) error {
 	if err != nil {
 		return err
 	}
+
+	return tcp.Serve(listen)
+}
+
+// ListenAndServeTLS 开始tcp监听 tls
+func (tcp *TCPServer) ListenAndServeTLS(address, certFile, keyFile string) error {
+	if tcp.isListener == true {
+		return errors.New("已调用监听端口")
+	}
+	if address == "" {
+		return errors.New("监听地址不能为空")
+	}
+	// 开启tcp监听
+	addr, err := net.ResolveTCPAddr("tcp", address)
+	if err != nil {
+		globalLogger.Errorf(err.Error())
+		return err
+	}
+	listen, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return err
+	}
+	// 证书配置
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return err
+	}
+	config := &tls.Config{Certificates: []tls.Certificate{cert}}
+
+	tlsListener := tls.NewListener(listen, config)
+
+	return tcp.Serve(tlsListener)
+}
+
+// Serve 开启服务
+func (tcp *TCPServer) Serve(listen net.Listener) error {
 	// 判断是否设置读超时
 	if tcp.readDeadline == 0 {
 		tcp.readDeadline = DefaultReadDeadline

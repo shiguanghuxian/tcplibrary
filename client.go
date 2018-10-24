@@ -7,8 +7,8 @@
 package tcplibrary
 
 import (
+	"crypto/tls"
 	"errors"
-	"net"
 )
 
 /* tcp golang客户端 */
@@ -46,12 +46,18 @@ func NewTCPClient(debug bool, socket Socket, packets ...Packet) (*TCPClient, err
 
 // DialAndStart 连接到服务器，并开始读取信息
 func (c *TCPClient) DialAndStart(address string) error {
-	addr, err := net.ResolveTCPAddr("tcp", address)
-	if err != nil {
-		globalLogger.Errorf(err.Error())
-		return err
+	// addr, err := net.ResolveTCPAddr("tcp", address)
+	// if err != nil {
+	// 	globalLogger.Errorf(err.Error())
+	// 	return err
+	// }
+	conf := &tls.Config{
+		InsecureSkipVerify: true,
 	}
-	conn, err := net.DialTCP("tcp", nil, addr)
+
+	conn, err := tls.Dial("tcp", address, conf)
+
+	// conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
 		globalLogger.Errorf(err.Error())
 		return err
