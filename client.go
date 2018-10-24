@@ -9,6 +9,7 @@ package tcplibrary
 import (
 	"crypto/tls"
 	"errors"
+	"net"
 )
 
 /* tcp golang客户端 */
@@ -46,22 +47,30 @@ func NewTCPClient(debug bool, socket Socket, packets ...Packet) (*TCPClient, err
 
 // DialAndStart 连接到服务器，并开始读取信息
 func (c *TCPClient) DialAndStart(address string) error {
-	// addr, err := net.ResolveTCPAddr("tcp", address)
-	// if err != nil {
-	// 	globalLogger.Errorf(err.Error())
-	// 	return err
-	// }
-	conf := &tls.Config{
-		InsecureSkipVerify: true,
-	}
-
-	conn, err := tls.Dial("tcp", address, conf)
-
-	// conn, err := net.DialTCP("tcp", nil, addr)
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		globalLogger.Errorf(err.Error())
 		return err
 	}
+
+	return c.Dial(conn)
+}
+
+// DialAndStart 连接到服务器，并开始读取信息
+func (c *TCPClient) DialAndStartTLS(address string) error {
+	conf := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	conn, err := tls.Dial("tcp", address, conf)
+	if err != nil {
+		globalLogger.Errorf(err.Error())
+		return err
+	}
+
+	return c.Dial(conn)
+}
+
+func (c *TCPClient) Dial(conn net.Conn) error {
 	// 判断是否设置读超时
 	if c.readDeadline == 0 {
 		c.readDeadline = DefaultReadDeadline
@@ -73,7 +82,7 @@ func (c *TCPClient) DialAndStart(address string) error {
 		packet:   c.packet,
 	}
 	// 通知建立连接
-	err = c.socket.OnConnect(c.conn)
+	err := c.socket.OnConnect(c.conn)
 	if err != nil {
 		globalLogger.Errorf(err.Error())
 		// 如果建立连接函数返回false，则关闭连接
