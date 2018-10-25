@@ -39,8 +39,8 @@ type TCPLibrary struct {
 	listener net.Listener // tcp监听 - 只存储tcp的 不存储ws的
 }
 
-// NewTCPServer 创建TCPLibrary对象 - 只用于创建服务端对象时使用，客户端直接使用 NewTCPClient
-func NewTCPServer(debug bool, socket ServerSocket, packets ...Packet) (*TCPLibrary, error) {
+// NewTCPLibrary 创建TCPLibrary对象 - 只用于创建服务端对象时使用，客户端直接使用 NewTCPClient
+func NewTCPLibrary(debug bool, socket ServerSocket, packets ...Packet) (*TCPLibrary, error) {
 	if socket == nil {
 		return nil, errors.New("ServerSocket参数不能是nil")
 	}

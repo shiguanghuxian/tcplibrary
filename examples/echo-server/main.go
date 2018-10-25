@@ -23,7 +23,7 @@ func main() {
 
 	// tcplibrary 实例
 	var err error
-	myTcp, err = tcplibrary.NewTCPServer(true, server)
+	myTcp, err = tcplibrary.NewTCPLibrary(true, server)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
