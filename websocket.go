@@ -24,11 +24,11 @@ type WebSocketServer struct {
 }
 
 // NewWebSocketServer 创建一个websocket监听
-func (t *TCPLibrary) NewWebSocketServer() (*WebSocketServer, error) {
+func (t *TCPLibrary) NewWebSocketServer() *WebSocketServer {
 	return &WebSocketServer{
 		TCPLibrary: t,
 		isListener: false,
-	}, nil
+	}
 }
 
 // ListenAndServe 开始ws监听

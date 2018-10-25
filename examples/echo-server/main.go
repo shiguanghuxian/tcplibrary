@@ -37,7 +37,7 @@ func main() {
 	}()
 
 	// 启动websocket监听
-	webSocketServer, err := myTcp.NewWebSocketServer()
+	webSocketServer := myTcp.NewWebSocketServer()
 	if err != nil {
 		log.Println(err)
 	}
@@ -49,7 +49,7 @@ func main() {
 	}()
 
 	// 启动tcp监听
-	tcpServer, err := myTcp.NewTCPServer()
+	tcpServer := myTcp.NewTCPServer()
 	if err != nil {
 		log.Println(err)
 	}

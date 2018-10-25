@@ -23,11 +23,11 @@ type TCPServer struct {
 }
 
 // NewTCPServer 创建一个server实例
-func (t *TCPLibrary) NewTCPServer() (*TCPServer, error) {
+func (t *TCPLibrary) NewTCPServer() *TCPServer {
 	return &TCPServer{
 		TCPLibrary: t,
 		isListener: false,
-	}, nil
+	}
 }
 
 // ListenAndServe 开始tcp监听
