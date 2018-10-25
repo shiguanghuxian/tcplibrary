@@ -7,6 +7,7 @@
 package tcplibrary
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"net"
@@ -32,15 +33,19 @@ func NewTCPClient(debug bool, socket Socket, packets ...Packet) (*TCPClient, err
 	} else {
 		packet = packets[0]
 	}
-	// 标记为客户端
-	isServer = false
+
+	// 请求上下文
+	ctx, cancel := context.WithCancel(context.Background())
 
 	return &TCPClient{
 		TCPLibrary: &TCPLibrary{
+			ctx:            ctx,
+			cancel:         cancel,
 			packet:         packet,
 			socket:         socket,
 			readDeadline:   DefaultReadDeadline,
 			readBufferSize: DefaultBufferSize,
+			isServer:       false,
 		},
 	}, nil
 }
@@ -56,7 +61,7 @@ func (c *TCPClient) DialAndStart(address string) error {
 	return c.Dial(conn)
 }
 
-// DialAndStart 连接到服务器，并开始读取信息
+// DialAndStartTLS 连接到服务器，并开始读取信息 tls
 func (c *TCPClient) DialAndStartTLS(address string) error {
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
@@ -70,6 +75,7 @@ func (c *TCPClient) DialAndStartTLS(address string) error {
 	return c.Dial(conn)
 }
 
+// Dial 连接tcp服务端
 func (c *TCPClient) Dial(conn net.Conn) error {
 	// 判断是否设置读超时
 	if c.readDeadline == 0 {

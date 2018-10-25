@@ -6,16 +6,20 @@
  */
 package tcplibrary
 
-import "golang.org/x/net/websocket"
+import (
+	"context"
+
+	"golang.org/x/net/websocket"
+)
 
 /* tcp库用到的接口定义 */
 
 // Socket tcp通讯需要的一些回调函数
 type Socket interface {
-	OnConnect(*Conn) error           // 连接建立时
-	OnError(error)                   // 连接发生错误
-	OnClose(*Conn, error)            // 关闭连接时
-	OnRecMessage(*Conn, interface{}) // 接收消息时
+	OnConnect(*Conn) error                            // 连接建立时
+	OnError(error)                                    // 连接发生错误
+	OnClose(*Conn, error)                             // 关闭连接时
+	OnRecMessage(context.Context, *Conn, interface{}) // 接收消息时
 }
 
 // ServerSocket 服务接口，实例化tcp server时传次参数

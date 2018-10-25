@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"os"
@@ -62,7 +63,7 @@ func (c *Client) OnClose(conn *tcplibrary.Conn, err error) {
 }
 
 // OnRecMessage 收到消息时
-func (c *Client) OnRecMessage(conn *tcplibrary.Conn, v interface{}) {
+func (c *Client) OnRecMessage(ctx context.Context, conn *tcplibrary.Conn, v interface{}) {
 	log.Println("OnRecMessage")
 	if packet, ok := v.(*tcplibrary.DefaultPacket); ok == true {
 		log.Printf("消息体长度:%d 消息体内容:%s", packet.Length, string(packet.GetPayload()))

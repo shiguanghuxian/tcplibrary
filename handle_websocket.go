@@ -24,16 +24,22 @@ func (ws *WebSocketServer) handleConn(conn *Conn) {
 	go ws.handleMessage(conn, messageChannel)
 	// 循环读取 websocket
 	for {
-		// 解析websocket传输的包
-		defaultPacket := new(DefaultPacket)
-		err := ws.packet.GetWebsocketCodec().Receive(conn.Conn.(*websocket.Conn), defaultPacket)
-		if err != nil {
-			globalLogger.Errorf(err.Error())
-			// 关闭连接，并通知错误
-			ws.closeConn(conn, err)
-			break
+		select {
+		case <-ws.ctx.Done():
+			globalLogger.Infof("ws handleConn收到ctx.Done()")
+			return
+		default:
+			// 解析websocket传输的包
+			defaultPacket := new(DefaultPacket)
+			err := ws.packet.GetWebsocketCodec().Receive(conn.Conn.(*websocket.Conn), defaultPacket)
+			if err != nil {
+				globalLogger.Errorf(err.Error())
+				// 关闭连接，并通知错误
+				ws.closeConn(conn, err)
+				break
+			}
+			// 向管道写入数据
+			messageChannel <- defaultPacket
 		}
-		// 向管道写入数据
-		messageChannel <- defaultPacket
 	}
 }

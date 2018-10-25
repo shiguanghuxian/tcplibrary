@@ -15,12 +15,12 @@ import (
 // SendMessageToClients 发送数据给指定客户端
 // 返回值，第一个值为发送成功几个连接
 // 只有服务端可调用
-func SendMessageToClients(v interface{}, clientIDs ...string) (sendCount int, err error) {
-	if isServer == false {
+func (t *TCPLibrary) SendMessageToClients(v interface{}, clientIDs ...string) (sendCount int, err error) {
+	if t.isServer == false {
 		return 0, errors.New("客户端不允许调用此函数")
 	}
 	for _, vv := range clientIDs {
-		if val, ok := clients.Load(vv); ok == true {
+		if val, ok := t.clients.Load(vv); ok == true {
 			if conn, ok := val.(*Conn); ok == true {
 				_, err = conn.SendMessage(v)
 				if err == nil {
@@ -34,12 +34,12 @@ func SendMessageToClients(v interface{}, clientIDs ...string) (sendCount int, er
 
 // SendMessageToAll 发送给所有客户端
 // 只有服务端可调用
-func SendMessageToAll(v interface{}) (int, error) {
-	if isServer == false {
+func (t *TCPLibrary) SendMessageToAll(v interface{}) (int, error) {
+	if t.isServer == false {
 		return 0, errors.New("客户端不允许调用此函数")
 	}
 	sendCount := 0
-	clients.Range(func(key, val interface{}) bool {
+	t.clients.Range(func(key, val interface{}) bool {
 		if conn, ok := val.(*Conn); ok == true {
 			_, err := conn.SendMessage(v)
 			if err != nil {

@@ -7,7 +7,6 @@
 package tcplibrary
 
 import (
-	"fmt"
 	"net"
 )
 
@@ -63,19 +62,4 @@ func (c *Conn) GetClientID() string {
 // GetConnType 获取连接类型
 func (c *Conn) GetConnType() TCPType {
 	return c.connType
-}
-
-// CloseForClientID 根据clientID关闭连接
-func CloseForClientID(clientID string) error {
-	// log.Println(clientID)
-	connInterface, ok := clients.Load(clientID)
-	if ok == false {
-		return fmt.Errorf("踢人失败，没有这样的连接1:%s", clientID)
-	}
-	if conn, ok := connInterface.(*Conn); ok == true {
-		conn.Close()
-	} else {
-		return fmt.Errorf("踢人失败，没有这样的连接2:%s", clientID)
-	}
-	return nil
 }

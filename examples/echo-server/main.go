@@ -1,19 +1,43 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"time"
 
 	"github.com/shiguanghuxian/tcplibrary"
+)
+
+var (
+	myTcp *tcplibrary.TCPLibrary
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
+	// 自己的服务实例
 	server := new(Server)
+
+	// tcplibrary 实例
+	var err error
+	myTcp, err = tcplibrary.NewTCPServer(true, server)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	// 测试结束服务
+	go func() {
+		time.Sleep(20 * time.Second)
+		err = myTcp.StopService()
+		log.Println("结束服务：", err)
+	}()
+
 	// 启动websocket监听
-	webSocketServer, err := tcplibrary.NewWebSocketServer(true, server)
+	webSocketServer, err := myTcp.NewWebSocketServer()
 	if err != nil {
 		log.Println(err)
 	}
@@ -25,7 +49,7 @@ func main() {
 	}()
 
 	// 启动tcp监听
-	tcpServer, err := tcplibrary.NewTCPServer(true, server)
+	tcpServer, err := myTcp.NewTCPServer()
 	if err != nil {
 		log.Println(err)
 	}
@@ -57,12 +81,12 @@ func (s *Server) OnClose(conn *tcplibrary.Conn, err error) {
 }
 
 // OnRecMessage 收到客户端发送过来的消息时
-func (s *Server) OnRecMessage(conn *tcplibrary.Conn, v interface{}) {
+func (s *Server) OnRecMessage(ctx context.Context, conn *tcplibrary.Conn, v interface{}) {
 	log.Println("OnRecMessage")
 	if packet, ok := v.(*tcplibrary.DefaultPacket); ok == true {
 		log.Printf("消息体长度:%d 消息体内容:%s\n", packet.Length, string(packet.GetPayload()))
 		// 转发给所有
-		n, err := tcplibrary.SendMessageToAll(v)
+		n, err := myTcp.SendMessageToAll(v)
 		log.Printf("成功发送%d个客户端，错误:%v\n", n, err)
 	} else {
 		js, _ := json.Marshal(v)

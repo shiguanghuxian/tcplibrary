@@ -19,32 +19,13 @@ import (
 // TCPServer tcp服务端对象
 type TCPServer struct {
 	*TCPLibrary
-	listener   net.Listener // tcp监听
-	isListener bool         // 是否已监听
+	isListener bool // 是否已监听
 }
 
 // NewTCPServer 创建一个server实例
-func NewTCPServer(debug bool, socket ServerSocket, packets ...Packet) (*TCPServer, error) {
-	if socket == nil {
-		return nil, errors.New("ServerSocket参数不能是nil")
-	}
-	// 封包解包对象
-	var packet Packet
-	if len(packets) == 0 {
-		packet = NewDefaultPacket()
-	} else {
-		packet = packets[0]
-	}
-	// 标记为服务端
-	isServer = true
-
+func (t *TCPLibrary) NewTCPServer() (*TCPServer, error) {
 	return &TCPServer{
-		TCPLibrary: &TCPLibrary{
-			packet:         packet,
-			socket:         socket,
-			readDeadline:   DefaultReadDeadline,
-			readBufferSize: DefaultBufferSize,
-		},
+		TCPLibrary: t,
 		isListener: false,
 	}, nil
 }
@@ -114,46 +95,52 @@ func (tcp *TCPServer) Serve(listen net.Listener) error {
 	globalLogger.Infof("tcp socket start, net %s addr %s", listen.Addr().Network(), listen.Addr().String())
 	// 开始接收客户端连接
 	for {
-		tcpConn, err := tcp.listener.Accept()
-		if err != nil {
-			globalLogger.Errorf(err.Error())
-			continue
-		}
-		// 创建一个Conn对象
-		conn := &Conn{
-			Conn:     tcpConn,
-			connType: TCPSocketType,
-			packet:   tcp.packet,
-		}
-		// 获取客户端id
-		serverSocket, ok := tcp.socket.(ServerSocket)
-		if ok == false {
-			// 如果建立连接函数返回false，则关闭连接
-			tcp.socket.OnClose(conn, fmt.Errorf("%s", "转换为ServerSocket错误")) // 通知关闭
-			err = conn.Close()                                              // 关闭连接
+		select {
+		case <-tcp.ctx.Done():
+			globalLogger.Infof("tcp Serve收到ctx.Done()")
+			return nil
+		default:
+			tcpConn, err := tcp.listener.Accept()
 			if err != nil {
 				globalLogger.Errorf(err.Error())
+				continue
 			}
-			break
-		}
-		clientID := serverSocket.GetClientID()
-		conn.clientID = clientID
-		// 通知连接创建后函数
-		err = tcp.socket.OnConnect(conn)
-		if err != nil {
-			// 如果建立连接函数返回false，则关闭连接
-			tcp.socket.OnClose(conn, err) // 通知关闭
-			err = conn.Close()            // 关闭连接
+			// 创建一个Conn对象
+			conn := &Conn{
+				Conn:     tcpConn,
+				connType: TCPSocketType,
+				packet:   tcp.packet,
+			}
+			// 获取客户端id
+			serverSocket, ok := tcp.socket.(ServerSocket)
+			if ok == false {
+				// 如果建立连接函数返回false，则关闭连接
+				tcp.socket.OnClose(conn, fmt.Errorf("%s", "转换为ServerSocket错误")) // 通知关闭
+				err = conn.Close()                                              // 关闭连接
+				if err != nil {
+					globalLogger.Errorf(err.Error())
+				}
+				break
+			}
+			clientID := serverSocket.GetClientID()
+			conn.clientID = clientID
+			// 通知连接创建后函数
+			err = tcp.socket.OnConnect(conn)
 			if err != nil {
-				globalLogger.Errorf(err.Error())
+				// 如果建立连接函数返回false，则关闭连接
+				tcp.socket.OnClose(conn, err) // 通知关闭
+				err = conn.Close()            // 关闭连接
+				if err != nil {
+					globalLogger.Errorf(err.Error())
+				}
+				break
 			}
-			break
+			tcp.clients.Store(clientID, conn)
+			// 设置超时
+			conn.SetReadDeadline(time.Now().Add(tcp.readDeadline))
+			// 开启一个协程处理数据接收
+			go tcp.handleConn(conn)
 		}
-		clients.Store(clientID, conn)
-		// 设置超时
-		conn.SetReadDeadline(time.Now().Add(tcp.readDeadline))
-		// 开启一个协程处理数据接收
-		go tcp.handleConn(conn)
 	}
 	return nil
 }

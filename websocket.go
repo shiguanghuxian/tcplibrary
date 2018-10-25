@@ -9,7 +9,6 @@ package tcplibrary
 import (
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -21,40 +20,24 @@ import (
 // WebSocketServer websocket 服务端操作对象
 type WebSocketServer struct {
 	*TCPLibrary
-	listener   *net.TCPListener // tcp监听
-	isListener bool             // 是否已监听
+	isListener bool // 是否已监听
 }
 
 // NewWebSocketServer 创建一个websocket监听
-func NewWebSocketServer(debug bool, socket ServerSocket, packets ...Packet) (*WebSocketServer, error) {
-	if socket == nil {
-		return nil, errors.New("ServerSocket参数不能是nil")
-	}
-	// 封包解包对象
-	var packet Packet
-	if len(packets) == 0 {
-		packet = NewDefaultPacket()
-	} else {
-		packet = packets[0]
-	}
-	// 标记为服务端
-	isServer = true
-
+func (t *TCPLibrary) NewWebSocketServer() (*WebSocketServer, error) {
 	return &WebSocketServer{
-		TCPLibrary: &TCPLibrary{
-			packet:         packet,
-			socket:         socket,
-			readDeadline:   DefaultReadDeadline,
-			readBufferSize: DefaultBufferSize,
-		},
+		TCPLibrary: t,
 		isListener: false,
 	}, nil
 }
 
-// ListenAndServe 开始tcp监听
+// ListenAndServe 开始ws监听
 // address 监听的地址和端口
 // route 监听的路由(url)
 func (ws *WebSocketServer) ListenAndServe(address, route string) error {
+	if ws.isListener == true {
+		return errors.New("已调用监听端口")
+	}
 	if address == "" {
 		return errors.New("监听地址不能为空")
 	}
@@ -68,6 +51,29 @@ func (ws *WebSocketServer) ListenAndServe(address, route string) error {
 	http.Handle(route, websocket.Handler(ws.handleWebSocketConn))
 	globalLogger.Infof("web socket start, net websocket addr %s", address)
 	err := http.ListenAndServe(address, nil)
+	return err
+}
+
+// ListenAndServeTLS 开始ws监听 tls
+// address 监听的地址和端口
+// route 监听的路由(url)
+func (ws *WebSocketServer) ListenAndServeTLS(address, certFile, keyFile, route string) error {
+	if ws.isListener == true {
+		return errors.New("已调用监听端口")
+	}
+	if address == "" {
+		return errors.New("监听地址不能为空")
+	}
+	if route == "" {
+		route = "/"
+	}
+	// 判断是否设置读超时
+	if ws.readDeadline == 0 {
+		ws.readDeadline = DefaultReadDeadline
+	}
+	http.Handle(route, websocket.Handler(ws.handleWebSocketConn))
+	globalLogger.Infof("web socket start, net websocket addr %s", address)
+	err := http.ListenAndServeTLS(address, certFile, keyFile, nil)
 	return err
 }
 
@@ -93,7 +99,7 @@ func (ws *WebSocketServer) handleWebSocketConn(wsConn *websocket.Conn) {
 	// 补上客户端id和封包解包对象，并存入服务端客户端对象
 	clientID := serverSocket.GetClientID()
 	conn.clientID = clientID
-	clients.Store(clientID, conn)
+	ws.clients.Store(clientID, conn)
 	// 设置超时
 	conn.SetReadDeadline(time.Now().Add(ws.readDeadline))
 	// 调用OnConnect
