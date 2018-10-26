@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>测试websocket</title>
+</head>
+
+<body>
+    <input type="text" id="val" />
+    <button onclick="sendMsg()">发送</button>
+    <script>
+        var ws = new WebSocket("ws://localhost:1126/vivi");
+
+        ws.onopen = function (evt) {
+            console.log("Connection open ...");
+            setInterval(function(){
+                ws.send(`{"Payload":"ping"}`)
+            }, 1000)
+        };
+
+        ws.onmessage = function (evt) {
+            console.log("Received Message: " + evt.data);
+        };
+
+        ws.onclose = function (evt) {
+            console.log("Connection closed.");
+        };
+        function sendMsg() {
+            ws.send(`{"Payload":"${document.getElementById('val').value}"}`)
+        }
+    </script>
+</body>
+
+</html>

@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"net"
+	"time"
 )
 
 /* tcp golang客户端 */
@@ -18,7 +19,8 @@ import (
 // TCPClient tcp客户端
 type TCPClient struct {
 	*TCPLibrary
-	conn *Conn // 连接对象
+	pingData interface{} // ping时的包
+	conn     *Conn       // 连接对象
 }
 
 // NewTCPClient 创建一个tcp客户端
@@ -107,4 +109,22 @@ func (c *TCPClient) Dial(conn net.Conn) error {
 // GetConn 获取连接对象
 func (c *TCPClient) GetConn() *Conn {
 	return c.conn
+}
+
+// Ping 保活
+func (c *TCPClient) Ping(v interface{}) {
+	go func() {
+		for {
+			_, err := c.conn.SendMessage(v)
+			if err != nil {
+				globalLogger.Errorf("client ping error", err)
+				return
+			}
+			if DefaultReadDeadline < 3*time.Second {
+				time.Sleep(1 * time.Second)
+			} else {
+				time.Sleep(DefaultReadDeadline / 3 * 2)
+			}
+		}
+	}()
 }

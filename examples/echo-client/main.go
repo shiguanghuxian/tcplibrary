@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"time"
 
 	"github.com/shiguanghuxian/tcplibrary"
 )
@@ -13,7 +12,7 @@ import (
 func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1; i++ {
 		go func() {
 			client := new(Client)
 			c, err := tcplibrary.NewTCPClient(true, client)
@@ -22,6 +21,10 @@ func main() {
 			}
 			err = c.DialAndStart(":1028")
 			log.Println(err)
+			// 保活ping
+			c.Ping(&tcplibrary.DefaultPacket{
+				Payload: []byte("ping"),
+			})
 		}()
 	}
 
@@ -35,17 +38,17 @@ type Client struct {
 // OnConnect 连接建立时
 func (c *Client) OnConnect(conn *tcplibrary.Conn) error {
 	log.Println("OnConnect")
-	go func() {
-		conn := conn
-		for {
-			pp := &tcplibrary.DefaultPacket{
-				Payload: []byte("你好世界"),
-			}
-			n, err := conn.SendMessage(pp)
-			log.Println(n, err)
-			time.Sleep(1 * time.Second)
-		}
-	}()
+	// go func() {
+	// 	conn := conn
+	// 	for {
+	// 		pp := &tcplibrary.DefaultPacket{
+	// 			Payload: []byte("你好世界"),
+	// 		}
+	// 		n, err := conn.SendMessage(pp)
+	// 		log.Println(n, err)
+	// 		time.Sleep(1 * time.Second)
+	// 	}
+	// }()
 	return nil
 }
 

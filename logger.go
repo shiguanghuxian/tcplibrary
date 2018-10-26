@@ -55,7 +55,7 @@ func (l *Logger) Infof(format string, a ...interface{}) {
 		return
 	}
 	format = fmt.Sprintf("INFO: %s\n", format)
-	log.Printf(format, a...)
+	log.Output(2, fmt.Sprintf(format, a...))
 }
 
 // Warnf 打印错误 Warn
@@ -64,17 +64,17 @@ func (l *Logger) Warnf(format string, a ...interface{}) {
 		return
 	}
 	format = fmt.Sprintf("WARN: %s\n", format)
-	log.Printf(format, a...)
+	log.Output(2, fmt.Sprintf(format, a...))
 }
 
 // Errorf 打印错误 Error
 func (l *Logger) Errorf(format string, a ...interface{}) {
 	format = fmt.Sprintf("ERROR: %s\n", format)
-	log.Printf(format, a...)
+	log.Output(2, fmt.Sprintf(format, a...))
 }
 
 // Fatalf 打印错误 Fatal
 func (l *Logger) Fatalf(format string, a ...interface{}) {
 	format = fmt.Sprintf("FATAL: %s\n", format)
-	log.Printf(format, a...)
+	log.Output(2, fmt.Sprintf(format, a...))
 }

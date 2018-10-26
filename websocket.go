@@ -88,7 +88,7 @@ func (ws *WebSocketServer) handleWebSocketConn(wsConn *websocket.Conn) {
 	// 保存连接到客户端数组
 	serverSocket, ok := ws.socket.(ServerSocket)
 	if ok == false {
-		// 如果建立连接函数返回false，则关闭连接
+		// 通知关闭连接
 		ws.socket.OnClose(conn, fmt.Errorf("%s", "转换为ServerSocket错误")) // 通知关闭
 		err := conn.Close()                                            // 关闭连接
 		if err != nil {
@@ -106,7 +106,7 @@ func (ws *WebSocketServer) handleWebSocketConn(wsConn *websocket.Conn) {
 	// 通知连接创建后函数
 	err := ws.socket.OnConnect(conn)
 	if err != nil {
-		// 如果建立连接函数返回false，则关闭连接
+		// 通知关闭连接
 		ws.socket.OnClose(conn, err) // 通知关闭
 		err = conn.Close()           // 关闭连接
 		if err != nil {

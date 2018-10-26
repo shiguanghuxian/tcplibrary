@@ -16,7 +16,7 @@ import (
 func (ws *WebSocketServer) handleConn(conn *Conn) {
 	defer func() {
 		if r := recover(); r != nil {
-			globalLogger.Fatalf("%T", r)
+			globalLogger.Errorf("%T", r)
 		}
 	}()
 	// 收到消息的管道
@@ -36,7 +36,7 @@ func (ws *WebSocketServer) handleConn(conn *Conn) {
 				globalLogger.Errorf(err.Error())
 				// 关闭连接，并通知错误
 				ws.closeConn(conn, err)
-				break
+				return
 			}
 			// 向管道写入数据
 			messageChannel <- defaultPacket

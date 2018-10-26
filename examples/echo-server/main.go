@@ -31,7 +31,7 @@ func main() {
 
 	// 测试结束服务
 	go func() {
-		time.Sleep(20 * time.Second)
+		time.Sleep(2000 * time.Second)
 		err = myTcp.StopService()
 		log.Println("结束服务：", err)
 	}()
@@ -86,8 +86,12 @@ func (s *Server) OnRecMessage(ctx context.Context, conn *tcplibrary.Conn, v inte
 	if packet, ok := v.(*tcplibrary.DefaultPacket); ok == true {
 		log.Printf("消息体长度:%d 消息体内容:%s\n", packet.Length, string(packet.GetPayload()))
 		// 转发给所有
-		n, err := myTcp.SendMessageToAll(v)
-		log.Printf("成功发送%d个客户端，错误:%v\n", n, err)
+		if str, ok := packet.Payload.(string); ok == true {
+			if str != "ping" {
+				n, err := myTcp.SendMessageToAll(v)
+				log.Printf("成功发送%d个客户端，错误:%v\n", n, err)
+			}
+		}
 	} else {
 		js, _ := json.Marshal(v)
 		log.Println(string(js))
